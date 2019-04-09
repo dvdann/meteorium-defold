@@ -1,0 +1,15 @@
+images {
+  image: "/assets/sprites/splash/bg_tim.png"
+}
+images {
+  image: "/assets/sprites/splash/garis_tim.png"
+}
+images {
+  image: "/assets/sprites/splash/logo_tim.png"
+}
+images {
+  image: "/assets/sprites/splash/teks_tim.png"
+}
+margin: 2
+extrude_borders: 0
+inner_padding: 0

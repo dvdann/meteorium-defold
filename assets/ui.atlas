@@ -1,0 +1,93 @@
+images {
+  image: "/assets/sprites/button/button_astropedia.png"
+}
+images {
+  image: "/assets/sprites/button/button_astropedia2.png"
+}
+images {
+  image: "/assets/sprites/button/button_bermain.png"
+}
+images {
+  image: "/assets/sprites/button/button_bermain2.png"
+}
+images {
+  image: "/assets/sprites/button/button_credit.png"
+}
+images {
+  image: "/assets/sprites/button/button_credit2.png"
+}
+images {
+  image: "/assets/sprites/button/button_dipilih.png"
+}
+images {
+  image: "/assets/sprites/button/button_harga.png"
+}
+images {
+  image: "/assets/sprites/button/button_harga2.png"
+}
+images {
+  image: "/assets/sprites/button/button_kembali.png"
+}
+images {
+  image: "/assets/sprites/button/button_kembali2.png"
+}
+images {
+  image: "/assets/sprites/button/button_menuawal.png"
+}
+images {
+  image: "/assets/sprites/button/button_menuawal2.png"
+}
+images {
+  image: "/assets/sprites/button/button_pilih.png"
+}
+images {
+  image: "/assets/sprites/roket_hidden.png"
+}
+images {
+  image: "/assets/sprites/button_trivia.png"
+}
+images {
+  image: "/assets/sprites/button_triviahidden.png"
+}
+images {
+  image: "/assets/sprites/button/button_pilihroket.png"
+}
+images {
+  image: "/assets/sprites/button/button_pilihroket2.png"
+}
+images {
+  image: "/assets/sprites/button/button_mainlagi.png"
+}
+images {
+  image: "/assets/sprites/button/button_mainlagi2.png"
+}
+images {
+  image: "/assets/sprites/trivia/judul_teks_trivia.png"
+}
+images {
+  image: "/assets/sprites/popup_achievment.png"
+}
+images {
+  image: "/assets/sprites/popup_exit.png"
+}
+images {
+  image: "/assets/sprites/button/button_ya.png"
+}
+images {
+  image: "/assets/sprites/button/button_ya2.png"
+}
+images {
+  image: "/assets/sprites/button/button_help.png"
+}
+images {
+  image: "/assets/sprites/button/button_help2.png"
+}
+images {
+  image: "/assets/sprites/button/button_tidak.png"
+}
+images {
+  image: "/assets/sprites/button/button_tidak2.png"
+}
+margin: 2
+extrude_borders: 0
+inner_padding: 0

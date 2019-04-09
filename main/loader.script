@@ -1,0 +1,127 @@
+--GLOBAL VARIABLE
+highscore = 0 -- saved
+score = 0 -- current in-game
+coin_saved = 0 -- saved
+coin_collected = 0 -- current in-game
+astropedia_data = nil -- for storing data json (decoded)
+curr_rocket = 1 -- for rocket selected
+unlocked_rocket = {true, false, false, false} -- unlocked rocket
+unlocked_astro = {true, false, false, false, false, false} -- unlocked astropedia
+meteors_tab = {} -- for tracking meteor that created
+
+local filename = sys.get_save_file("meteorium", "gamedata")
+
+local function load_data()
+	local data_loaded = sys.load(filename, "gamedata")
+	pprint(data_loaded)
+	if not next(data_loaded) then
+		print "no gamedata loaded"
+	else
+		highscore = data_loaded.highscore
+		coin_saved = data_loaded.coin_saved
+		curr_rocket = data_loaded.curr_rocket
+		unlocked_rocket = data_loaded.unlocked_rocket
+		unlocked_astro = data_loaded.unlocked_astro
+		print "gamedata loaded"
+	end
+end
+
+local function save_gamedata()
+	local data_saved = {
+		highscore = highscore,
+		coin_saved = coin_saved,
+		curr_rocket = curr_rocket,
+		unlocked_rocket = unlocked_rocket,
+		unlocked_astro = unlocked_astro
+	}
+	sys.save(filename, data_saved)
+	pprint(data_saved)
+	print "saved new gamedata"
+end
+
+local PROX = "#proxy_"
+-- debug_json
+local json_db = sys.load_resource("/main/database/astropedia_db.json")
+
+local function load_splash_screen()
+	msg.post(PROX.."splash", "load")
+end
+
+local function unload_splash_screen()
+	msg.post(PROX.."splash", "unload")
+end
+
+local function load_menu(self)
+	msg.post(PROX.."menu", "load")
+end
+
+local function enable_menu(self, enable)
+	if enable then
+		msg.post(PROX.."menu", "enable")
+		msg.post("menu:/go_menu#fading", "do_fade_in")
+		msg.post("menu:/go_menu", "on_enable")
+	else
+		msg.post(PROX.."menu", "disable")
+	end
+	print("menu is enable?",enable)
+end
+
+local function load_game(self)
+	msg.post(PROX.."game", "load")
+end
+
+local function unload_game(self)
+	msg.post(PROX.."game", "unload")
+	return true
+end
+
+function init(self)
+	-- to make sure generate random number
+	math.randomseed(os.time())
+	load_data()
+	astropedia_data = json.decode(json_db)
+	--[[for i=1,#astropedia_data do
+		pprint(astropedia_data[i].description)
+	end]]
+	msg.post(".", "acquire_input_focus")
+	--load_menu(self)
+	load_splash_screen()
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("goto_menu_via_splash") then
+		print "come menu"
+		unload_splash_screen()
+		load_menu(self)
+	end
+	-- from gameover.gui_script
+	if message_id == hash("save_game") then
+		save_gamedata()
+	end
+	-- from menu.gui_script
+	if message_id == hash("goto_game") then
+		enable_menu(self, false)
+		load_game(self)
+	-- from game.script
+	elseif message_id == hash("goto_menu") then
+		unload_game(self)
+		enable_menu(self, true)
+	-- from gameover.gui_script
+	elseif message_id == hash("restart_game") then
+		self.restart = true
+		unload_game(self)
+	elseif message_id == hash("proxy_loaded") then
+		msg.post(sender, "init")
+		msg.post(sender, "enable")
+		print(sender, "is activated")
+	end
+	if message_id == hash("proxy_unloaded") then
+		print(sender, "is unloaded")
+		-- this unload can be used to restart game
+		if sender.fragment == hash("proxy_game") and self.restart then
+			print("restart game")
+			load_game(self)
+			self.restart = false
+		end
+	end
+end

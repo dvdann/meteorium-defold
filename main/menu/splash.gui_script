@@ -1,0 +1,15 @@
+local function to_menu(self)
+	msg.post("spalsh_screen:/go_splash_screen#fading", "do_fade_out", {screen = "goto_menu_via_splash"})
+end
+
+function init(self)
+	msg.post("spalsh_screen:/go_splash_screen#fading", "zero_alpha")
+	local title_node = gui.get_node("title_box")
+	local box_node = gui.get_node("box")
+	local logo_node = gui.get_node("logo_box")
+	gui.animate(title_node, "position.x", 293, gui.EASING_INQUAD, 0.6, 0.9)
+	gui.animate(box_node, "color.w", 0, gui.EASING_LINEAR, 0.6, 1, function()
+		gui.animate(logo_node, "color.w", 1, gui.EASING_LINEAR, 0.65)
+		gui.animate(logo_node, "position", vmath.vector3(78, 405, 0), gui.EASING_OUTBACK, 1, 0, to_menu)
+	end)
+end

@@ -1,0 +1,60 @@
+images {
+  image: "/assets/sprites/ikon/ikon_roket.png"
+}
+images {
+  image: "/assets/sprites/koin.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_asteroid.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_bulan.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_bumi.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_roket.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_asteroid.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_matahari.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_meteorid.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_satelit.png"
+}
+images {
+  image: "/assets/sprites/ikon/ikon_roketpedia.png"
+}
+images {
+  image: "/assets/sprites/rocket/roket2.png"
+}
+images {
+  image: "/assets/sprites/rocket/roket3.png"
+}
+images {
+  image: "/assets/sprites/rocket/roket4.png"
+}
+images {
+  image: "/assets/sprites/trash_coin/puing1.png"
+}
+images {
+  image: "/assets/sprites/trash_coin/puing2.png"
+}
+images {
+  image: "/assets/sprites/trash_coin/puing3.png"
+}
+images {
+  image: "/assets/sprites/trash_coin/puing4.png"
+}
+images {
+  image: "/assets/sprites/trash_coin/puing5.png"
+}
+margin: 2
+extrude_borders: 0
+inner_padding: 0

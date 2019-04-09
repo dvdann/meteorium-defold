@@ -1,0 +1,15 @@
+images {
+  image: "/assets/sprites/bg_game.png"
+}
+images {
+  image: "/assets/sprites/bg.png"
+}
+images {
+  image: "/assets/sprites/bg_selesai.png"
+}
+images {
+  image: "/assets/sprites/judul_meteorium.png"
+}
+margin: 2
+extrude_borders: 0
+inner_padding: 0

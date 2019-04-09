@@ -1,0 +1,525 @@
+local Button = require "main.module.gui_button"
+local Urls = require "main.module.msg_url"
+
+local function create_sprite_button(node, released_animation, callback)
+	return Button.create(node, callback, "sprite", hash(released_animation), hash(released_animation.."2"))
+end
+
+local function create_scale_button(node, callback)
+	return Button.create(node, callback)
+end
+
+local function updating_coin()
+	local node = gui.get_node("coin_text")
+	gui.set_text(node, coin_saved)
+end
+
+local function menu_state(self)
+	if self.curr_menu_state == "goto_choose_rocket" then
+		gui.animate(gui.get_node("main_menu"), "position.x", -480, gui.EASING_INBACK, 0.6)
+		gui.animate(gui.get_node("rocket_list"), "position.x", -480, gui.EASING_OUTBACK, 0.6, 0.6, function()
+			self.btn_click_once = false
+		end)
+	elseif self.curr_menu_state == "goto_menu_via_choose_rocket" then
+		gui.animate(gui.get_node("rocket_list"), "position.x", 0, gui.EASING_INBACK, 0.6)
+		gui.animate(gui.get_node("main_menu"), "position.x", 0, gui.EASING_OUTBACK, 0.6, 0.6, function()
+			self.btn_click_once = false
+		end)
+	elseif self.curr_menu_state == "goto_astropedia" then
+		gui.animate(gui.get_node("main_menu"), "position.x", 480, gui.EASING_INBACK, 0.6)
+		gui.animate(gui.get_node("astronom"), "position.x", 480, gui.EASING_OUTBACK, 0.6, 0.6, function()
+			self.btn_click_once = false
+		end)
+	elseif self.curr_menu_state == "goto_menu_via_astro" then
+		gui.animate(gui.get_node("astronom"), "position.x", 0, gui.EASING_INBACK, 0.6)
+		gui.animate(gui.get_node("main_menu"), "position.x", 0, gui.EASING_OUTBACK, 0.6, 0.6, function()
+			self.btn_click_once = false
+		end)
+	elseif self.curr_menu_state == "goto_game" then
+		self.btn_click_once = false
+		msg.post(".", "release_input_focus")
+		-- on_debug check module
+		--msg.post(Urls.my_url("loader:/go_loader#script"), self.curr_menu_state)
+		msg.post("menu:/go_menu#fading", "do_fade_out_imm", {screen = "goto_game"})
+	elseif self.curr_menu_state == "goto_close_help" then
+		local node = gui.get_node("help_panel")
+		gui.animate(node, "scale", vmath.vector3(0.4,0.4,1), gui.EASING_INBACK, 0.2, 0, function()
+			self.btn_click_once = false
+			gui.set_enabled(node, false)
+		end)
+		print "testing menu from help button"
+	elseif self.curr_menu_state == "goto_help" then
+		local node = gui.get_node("help_panel")
+		gui.set_enabled(node, true)
+		gui.animate(node, "scale", vmath.vector3(1,1,1), gui.EASING_OUTBACK, 0.3)
+		print "display help panel"
+	else
+		print("wrong state input on menu_state()")
+	end
+end
+
+local function buttons_astropedia(self, action_id, action)
+	for key, value in pairs(self.astropedias) do
+		if value.unlocked then
+			value.btn.on_input(action_id, action)
+		end
+	end
+end
+
+local function set_info_astropedia(self)
+	local name_text
+	local desc_text
+	if self.curr_obj_box == "trivial_1/box" then
+		name_text = astropedia_data[1].name
+		desc_text = astropedia_data[1].description
+	elseif self.curr_obj_box == "trivial_2/box" then
+		name_text = astropedia_data[2].name
+		desc_text = astropedia_data[2].description
+	elseif self.curr_obj_box == "trivial_3/box" then
+		name_text = astropedia_data[3].name
+		desc_text = astropedia_data[3].description
+	elseif self.curr_obj_box == "trivial_4/box" then
+		name_text = astropedia_data[4].name
+		desc_text = astropedia_data[4].description
+	elseif self.curr_obj_box == "trivial_5/box" then
+		name_text = astropedia_data[5].name
+		desc_text = astropedia_data[5].description
+	elseif self.curr_obj_box == "trivial_6/box" then
+		name_text = astropedia_data[6].name
+		desc_text = astropedia_data[6].description
+	end
+	gui.set_text(gui.get_node("title_panel"), name_text)
+	gui.set_text(gui.get_node("trivial_text"), desc_text)
+end
+
+-- setting switch between icon and trivia image
+local function set_icon_trivia(self, idx_box, enable)
+	local prefix
+	local sufix
+	if not enable then
+		gui.set_texture(self.curr_obj_node, "objects")
+		prefix = "ikon_"
+		gui.set_layer(self.curr_obj_node, "bot")
+		gui.set_layer(gui.get_node("trivia_panel"), "top")
+	else
+		gui.set_texture(self.curr_obj_node, "trivia")
+		prefix = "trivia_"
+		gui.set_layer(self.curr_obj_node, "top")
+		gui.set_layer(gui.get_node("trivia_panel"), "bot")
+	end
+	if idx_box == 1 then
+		sufix = "meteorid"
+	elseif idx_box == 2 then
+		if not enable then
+			sufix = "roketpedia"
+		else
+			sufix = "roket"
+		end
+	elseif idx_box == 3 then
+		sufix = "bulan"
+	elseif idx_box == 4 then
+		sufix = "bumi"
+	elseif idx_box == 5 then
+		sufix = "satelit"
+	elseif idx_box == 6 then
+		sufix = "matahari"
+	end
+	gui.play_flipbook(self.curr_obj_node, prefix..sufix)
+end
+
+local function show_astro_panel(self, enable)
+	local node = gui.get_node("trivia_panel")
+	local screen_y = 165
+	local pos_y
+	local ease
+	local obj_pos = vmath.vector3()
+	local box_pos = gui.get_position(gui.get_node(self.curr_obj_box))
+	local idx_box = tonumber(string.sub(self.curr_obj_box, 9, 9))
+	-- make position of object and panel properly in pop up
+	if enable then
+		set_info_astropedia(self)
+		pos_y = 400
+		ease = gui.EASING_OUTBACK
+		obj_pos.x = (box_pos.x + 240) * -1
+		obj_pos.y = screen_y
+		if idx_box >= 4 then
+			obj_pos.y = screen_y * 2
+		end
+	else
+		pos_y = -295
+		ease = gui.EASING_INBACK
+		obj_pos.x = 0
+		obj_pos.y = 0
+	end
+	-- make it shrink first then action after view
+	if not enable then
+		set_icon_trivia(self, idx_box, enable)
+	end
+	gui.animate(node, "position.y", pos_y, ease, 0.6)
+	gui.animate(self.curr_obj_node, "position", obj_pos, gui.EASING_INOUTCIRC, 0.75, 0, function()
+		self.btn_click_once = false
+		set_icon_trivia(self, idx_box, enable)
+	end)
+	self.panel_open = enable
+end
+
+local function init_astropedia(self)
+	local astro_callback = (function(node, box)
+		self.curr_obj_node = node
+		self.curr_obj_box = box
+		show_astro_panel(self, true)
+		self.btn_click_once = true
+	end)
+	self.astropedias = {
+		meteor = {
+			box = "trivial_1/box",
+			btn = create_scale_button(gui.get_node("trivial_1/box"), function()
+				astro_callback(self.astropedias.meteor.node, self.astropedias.meteor.box)
+			end),
+			unlocked = true,
+			node = gui.get_node("trivial_1/object_image")
+		},
+		rocket = {
+			box = "trivial_2/box",
+			btn = create_scale_button(gui.get_node("trivial_2/box"), function()
+				astro_callback(self.astropedias.rocket.node, self.astropedias.rocket.box)
+			end),
+			unlocked = false,
+			node = gui.get_node("trivial_2/object_image")
+		},
+		moon = {
+			box = "trivial_3/box",
+			btn = create_scale_button(gui.get_node("trivial_3/box"), function()
+				astro_callback(self.astropedias.moon.node, self.astropedias.moon.box)
+			end),
+			unlocked = false,
+			node = gui.get_node("trivial_3/object_image")
+		},
+		earth = {
+			box = "trivial_4/box",
+			btn = create_scale_button(gui.get_node("trivial_4/box"), function()
+				astro_callback(self.astropedias.earth.node, self.astropedias.earth.box)
+			end),
+			unlocked = false,
+			node = gui.get_node("trivial_4/object_image")
+		},
+		satellite = {
+			box = "trivial_5/box",
+			btn = create_scale_button(gui.get_node("trivial_5/box"), function()
+				astro_callback(self.astropedias.satellite.node, self.astropedias.satellite.box)
+			end),
+			unlocked = false,
+			node = gui.get_node("trivial_5/object_image")
+		},
+		sun = {
+			box = "trivial_6/box",
+			btn = create_scale_button(gui.get_node("trivial_6/box"), function()
+				astro_callback(self.astropedias.sun.node, self.astropedias.sun.box)
+			end),
+			unlocked = false,
+			node = gui.get_node("trivial_6/object_image")
+		}
+	}
+end
+
+local function unlock_astropedia(self, key_unlocked)
+	local data = self.astropedias[key_unlocked]
+	local box = data.box
+	data.unlocked = true
+	gui.set_texture(data.node, "objects") -- change texture first
+	gui.set_color(data.node, vmath.vector4(1,1,1,1))
+	gui.play_flipbook(gui.get_node(data.box), "button_trivia")
+	if key_unlocked == "rocket" then
+		gui.play_flipbook(data.node, "ikon_roketpedia")
+	elseif key_unlocked == "moon" then
+		gui.play_flipbook(data.node, "ikon_bulan")
+	elseif key_unlocked == "earth" then
+		gui.play_flipbook(data.node, "ikon_bumi")
+	elseif key_unlocked == "satellite" then
+		gui.play_flipbook(data.node, "ikon_satelit")
+	elseif key_unlocked == "sun" then
+		gui.play_flipbook(data.node, "ikon_matahari")
+	end
+end
+
+local function unlock_rocket(self, num_rocket_unlocked, init)
+	if not self.rockets[num_rocket_unlocked].is_sold then
+
+		self.rockets[num_rocket_unlocked].is_sold = true
+		local node = gui.get_node("rocket_"..num_rocket_unlocked.."/price_btn")
+		gui.play_flipbook(node, "button_pilih")
+		node = gui.get_node("rocket_"..num_rocket_unlocked.."/price_text")
+		gui.set_text(node, "")
+		node = gui.get_node("rocket_"..num_rocket_unlocked.."/coin_icon")
+		gui.set_color(node, vmath.vector4(1, 1, 1, 0))
+		unlocked_rocket[num_rocket_unlocked] = true -- saving in global var
+		-- make init not decrease coin again
+		if not init then
+			coin_saved = coin_saved - self.rockets[num_rocket_unlocked].price
+			updating_coin(self)
+			msg.post("loader:/go_loader#script", "save_game") -- saving game data
+			print("rocket",num_rocket_unlocked,"purchased")
+		end
+	end
+end
+
+local function button_rockets(self, action_id, action)
+	for key, val in pairs(self.rockets) do
+		if not val.selected and (coin_saved >= val.price or val.is_sold) then
+			val.btn.on_input(action_id, action)
+		end
+	end
+end
+
+local function set_mascot()
+	local node = gui.get_node("mascot")
+	-- setting diplay rocket in menu
+	if curr_rocket >= 2 then
+		gui.play_flipbook(node, "roket"..curr_rocket)
+	else
+		gui.play_flipbook(node, "ikon_roket")
+	end
+end
+
+local function selecting_rocket(self, selected_rocket, init)
+	for i = 1, #self.rockets do
+		if i ~= selected_rocket then
+			self.rockets[i].selected = false
+			if self.rockets[i].is_sold then
+				local node = gui.get_node("rocket_"..i.."/price_btn")
+				gui.play_flipbook(node, "button_pilih")
+			end
+		else
+			self.rockets[selected_rocket].selected = true
+			local node = gui.get_node("rocket_"..selected_rocket.."/price_btn")
+			gui.play_flipbook(node, "button_dipilih")
+			curr_rocket = selected_rocket
+			-- make init not saving again
+			if not init then
+				msg.post("loader:/go_loader#script", "save_game") -- saving game data
+				print("selected rocket",selected_rocket)
+			end
+			-- setting diplay rocket in menu
+			set_mascot()
+		end
+	end
+end
+
+-- on_debug
+local function init_rocket_market(self)
+	self.rockets = {
+		{
+			price = 0,
+			is_sold = true,
+			selected = true,
+			btn = create_scale_button(gui.get_node("rocket_1/rocket_box"), function()
+				selecting_rocket(self, 1)
+			end)
+		},{
+			price = 100,
+			is_sold = false,
+			selected = false,
+			btn = create_scale_button(gui.get_node("rocket_2/rocket_box"), function()
+				if self.rockets[2].is_sold then
+					selecting_rocket(self, 2)
+				else
+					unlock_rocket(self, 2)
+				end
+			end)
+		},{
+			price = 250,
+			is_sold = false,
+			selected = false,
+			btn = create_scale_button(gui.get_node("rocket_3/rocket_box"), function()
+				if self.rockets[3].is_sold then
+					selecting_rocket(self, 3)
+				else
+					unlock_rocket(self, 3)
+				end
+			end)
+		},{
+			price = 600,
+			is_sold = false,
+			selected = false,
+			btn = create_scale_button(gui.get_node("rocket_4/rocket_box"), function()
+				if self.rockets[4].is_sold then
+					selecting_rocket(self, 4)
+				else
+					unlock_rocket(self, 4)
+				end
+			end)
+		}
+	}
+end
+-- on_debug: need to improve implementation
+local function swipe_back(self, action)
+	if action.pressed then
+		self.start_capture = true
+		self.startX = action.x
+		self.currX = action.x
+	end
+	if self.start_capture then
+		self.currX = action.x
+	end
+	if self.curr_menu_state == "goto_astropedia" then
+		if action.released then
+			self.start_capture = false
+			if (self.currX - self.startX < -25) then
+				self.btn_click_once = true
+				self.curr_menu_state = "goto_menu_via_astro"
+				menu_state(self)
+			end
+		end
+	end
+	if self.curr_menu_state == "goto_choose_rocket" then
+		if action.released then
+			self.start_capture = false
+			if (self.currX - self.startX > 25) then
+				self.btn_click_once = true
+				self.curr_menu_state = "goto_menu_via_choose_rocket"
+				menu_state(self)
+			end
+		end
+	end
+end
+
+function init(self)
+	-- acquire_input_focus in handling with fade in
+	msg.post("menu:/go_menu#fading", "do_fade_in")
+
+	updating_coin(self)
+	print "from init menu"
+	self.start_capture = false
+	self.curr_menu_state = "goto_menu" -- just init to make back or esc key works
+	self.btn_click_once = false -- make sure it clicked once
+	self.panel_open = false -- initialization for panel astropedia
+	self.curr_obj_node = nil -- initialization for object unlocked in astropedia
+	init_astropedia(self)
+	init_rocket_market(self)
+	gui.set_enabled(gui.get_node("help_panel"), false)
+
+	-- IMPLEMENT LOADED GAME
+	for i, v in ipairs(self.rockets) do
+		if i ~= 1 then
+			local node = gui.get_node("rocket_"..i.."/price_text")
+			gui.set_text(node, v.price)
+		end
+	end
+	-- unlock rocket in loaded
+	for i, v in ipairs(unlocked_rocket) do
+		if v and i ~= 1 then
+			unlock_rocket(self, i, true)
+		end
+	end
+	selecting_rocket(self, curr_rocket, true)
+	-- unlock astropedia in loaded
+	for i, v in ipairs(unlocked_astro) do
+		local key
+		if v and i ~= 1 then
+			if i == 2 then
+				key = "satellite"
+			elseif i == 3 then
+				key = "moon"
+			elseif i == 4 then
+				key = "earth"
+			elseif i == 5 then
+				key = "rocket"
+			elseif i == 6 then
+				key = "sun"
+			end
+			unlock_astropedia(self, key)
+		end
+	end
+
+	self.play_btn = create_sprite_button(gui.get_node("start_btn"), "button_bermain", function()
+		self.btn_click_once = true
+		self.curr_menu_state = "goto_game"
+		menu_state(self)
+	end)
+	self.choose_rocket_btn = create_sprite_button(gui.get_node("char_btn"), "button_pilihroket", function()
+		self.btn_click_once = true
+		self.curr_menu_state = "goto_choose_rocket"
+		menu_state(self)
+	end)
+	self.to_menu_btn = create_sprite_button(gui.get_node("to_menu_box"), "button_menuawal", function()
+		self.btn_click_once = true
+		self.curr_menu_state = "goto_menu_via_choose_rocket"
+		menu_state(self)
+	end)
+	self.astropedia_btn = create_sprite_button(gui.get_node("astroped_btn"), "button_astropedia", function()
+		self.btn_click_once = true
+		self.curr_menu_state = "goto_astropedia"
+		menu_state(self)
+	end)
+	self.to_menu_btn2 = create_sprite_button(gui.get_node("to_menu_box2"), "button_menuawal", function()
+		self.btn_click_once = true
+		self.curr_menu_state = "goto_menu_via_astro"
+		menu_state(self)
+	end)
+
+	self.confirm_btn = create_sprite_button(gui.get_node("confirm_btn"), "button_kembali", function()
+		self.btn_click_once = true
+		show_astro_panel(self, false)
+	end)
+
+	self.help_btn = create_sprite_button(gui.get_node("help_btn"), "button_help", function()
+		self.btn_click_once = true
+		if self.curr_menu_state ~= "goto_help" then
+			self.curr_menu_state = "goto_help"
+		else
+			self.curr_menu_state = "goto_close_help"
+		end
+		print(self.curr_menu_state)
+		menu_state(self)
+	end)
+
+	self.credit_btn = create_sprite_button(gui.get_node("credit_btn"), "button_credit", function()
+		--self.btn_click_once = true
+		print "credit clicked"
+	end)
+
+end
+
+function on_message(self, message_id, message, sender)
+	-- from loader.script
+	if message_id == hash("on_enable") then
+		self.curr_menu_state = "goto_menu"
+		msg.post(".", "acquire_input_focus")
+		print("HIGHSCORE:",highscore)
+		print("COINS:",coin_saved)
+		msg.post("loader:/go_loader#script", "save_game") -- saving game data
+		updating_coin(self)
+	end
+	-- from game.script
+	if message_id == hash("unlock_astropedia") then
+		unlock_astropedia(self, message.unlocked)
+	end
+end
+
+function on_input(self, action_id, action)
+	swipe_back(self, action)
+	if not self.btn_click_once then
+		if (action_id == hash("back") or action_id == hash("esc")) and
+		action.pressed and string.sub(self.curr_menu_state, 1, 9) == "goto_menu" then
+			-- can quit if only if in goto_menu state
+			print "quit game"
+			msg.post("@system:", "exit", {code = 0})
+		elseif action_id ~= hash("esc") and action_id ~= hash("back") then
+			if not self.panel_open then
+				self.to_menu_btn2.on_input(action_id, action)
+				buttons_astropedia(self, action_id, action)
+			end
+			self.play_btn.on_input(action_id, action)
+			self.choose_rocket_btn.on_input(action_id, action)
+			self.to_menu_btn.on_input(action_id, action)
+			self.astropedia_btn.on_input(action_id, action)
+			button_rockets(self, action_id, action) -- on_debug
+			self.confirm_btn.on_input(action_id, action)
+			self.credit_btn.on_input(action_id, action)
+		end
+	end
+	if (self.curr_menu_state ~= "goto_help" or self.curr_menu_state ~= "goto_close_help") and
+	action_id ~= hash("esc") and action_id ~= hash("back") then
+		self.help_btn.on_input(action_id, action)
+	end
+end

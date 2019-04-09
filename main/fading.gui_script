@@ -1,0 +1,50 @@
+local function fade_out(self, immediate)
+	print "do fade_out"
+	local delay = 0.8
+	if immediate then
+		delay = 0
+	end
+	gui.animate(self.node, "color.w", 1, gui.EASING_OUTSINE, 0.4, delay, function() 
+		print ("Animate fading end. Goto screen: ",self.goto_screen)
+		msg.post("loader:/go_loader#script", self.goto_screen)
+	end)
+end
+
+local function fade_in(self, auto_fade_off)
+	if auto_fade_off then
+		gui.animate(self.node, "color.w", 0, gui.EASING_INSINE, 0.6, 0, fade_out, gui.PLAYBACK_ONCE_FORWARD)
+	else
+		gui.animate(self.node, "color.w", 0, gui.EASING_INSINE, 0.3, 0, function() 
+			print "Animate fading end"
+			msg.post(self.sender_url, "acquire_input_focus")
+		end)
+	end
+end
+
+function init(self)
+	gui.set_render_order(1) -- make sure its the top of renderer
+	self.node = gui.get_node("fade_box")
+end
+
+function on_message(self, message_id, message, sender)
+	if message_id == hash("zero_alpha") then
+		gui.animate(self.node, "color.w", 0, gui.EASING_INSINE, 0.1)
+	end
+	if message_id == hash("do_fade_out") then
+		self.goto_screen = message.screen
+		fade_out(self, false)
+	end
+	if message_id == hash("do_fade_out_imm") then
+		self.goto_screen = message.screen
+		fade_out(self, true)
+	end
+	if message_id == hash("do_fade_in") then
+		if message.screen then -- if there is screen to go
+			self.goto_screen = message.screen
+			fade_in(self, true)
+		else -- if just doing fade in in this screen
+			fade_in(self)
+			self.sender_url = sender
+		end
+	end
+end

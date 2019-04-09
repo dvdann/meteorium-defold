@@ -1,0 +1,162 @@
+local Fps = require "main.module.fps"
+local action_id_back = hash("back")
+local action_id_esc = hash("esc")
+local TIME_BASE = 0.15
+local TIME_SPAWN = 0.95
+
+local function reset_tick_meteor(self)
+	self.tick_meteor = 0.0
+end
+
+local function reset_tick_score(self)
+	self.tick_score = 0.0
+end
+
+local function unlock_achivement(self)
+	local data_unlocked
+	if score >= 350 and not unlocked_astro[2] then -- 300
+		data_unlocked = "satellite"
+		msg.post("menu:/go_menu#menu", "unlock_astropedia", { unlocked = data_unlocked})
+		msg.post("/go_game#game", "achivement_update", {data = data_unlocked})
+		unlocked_astro[2] = true
+	elseif score >= 600 and not unlocked_astro[3] then -- 550
+		data_unlocked = "moon"
+		msg.post("menu:/go_menu#menu", "unlock_astropedia", { unlocked = data_unlocked})
+		msg.post("/go_game#game", "achivement_update", {data = data_unlocked})
+		unlocked_astro[3] = true
+	elseif score >= 850 and not unlocked_astro[4] then -- 750
+		data_unlocked = "earth"
+		msg.post("menu:/go_menu#menu", "unlock_astropedia", { unlocked = data_unlocked})
+		msg.post("/go_game#game", "achivement_update", {data = data_unlocked})
+		unlocked_astro[4] = true
+	elseif score >= 1000 and not unlocked_astro[5] then -- 950
+		data_unlocked = "rocket"
+		msg.post("menu:/go_menu#menu", "unlock_astropedia", { unlocked = data_unlocked})
+		msg.post("/go_game#game", "achivement_update", {data = data_unlocked})
+		unlocked_astro[5] = true
+	elseif score >= 1500 and not unlocked_astro[6] then -- 1250
+		data_unlocked = "sun"
+		msg.post("menu:/go_menu#menu", "unlock_astropedia", { unlocked = data_unlocked})
+		msg.post("/go_game#game", "achivement_update", {data = data_unlocked})
+		unlocked_astro[6] = true
+	end
+end
+
+local function score_everytick(self, dt, duration)
+	self.tick_score = self.tick_score + dt
+	if self.tick_score > duration then
+		score = score + 1
+		msg.post("/go_game#game", "score_update")
+		reset_tick_score(self)
+		unlock_achivement(self) -- on_debug
+	end
+end
+
+local function generate_new_coin(self)
+	local coin_pos = vmath.vector3()
+	coin_pos.x = math.random(50, 430)
+	coin_pos.y = math.random(70, 720)
+	coin_pos.z = 0.11
+	factory.create("/go_game#coin_factory", coin_pos)
+end
+
+local function generate_new_meteor(self)
+	local meteor_pos = vmath.vector3()
+	local call_from = { "right", "left", "top", "bot" }
+	local pick_from = call_from[math.random(1, #call_from)]
+	local rand_pos_y = math.random(30, 770)
+	local rand_pos_x = math.random(30, 450)
+	if pick_from == "right" then
+		meteor_pos.x = 490
+		meteor_pos.y = rand_pos_y
+	elseif pick_from == "left" then
+		meteor_pos.x = -10
+		meteor_pos.y = rand_pos_y
+	elseif pick_from == "top" then
+		meteor_pos.y = 810
+		meteor_pos.x = rand_pos_x
+	elseif pick_from == "bot" then
+		meteor_pos.y = -10
+		meteor_pos.x = rand_pos_x
+	end
+	meteor_pos.z = 0.2
+
+	local instance_meteor = factory.create("/go_game#meteor_factory", meteor_pos)
+	msg.post(instance_meteor, "set_move_dir", {spawn_from = pick_from})
+end
+
+local function create_meteor_everytick(self, dt, duration)
+	self.tick_meteor = self.tick_meteor + dt
+	if self.tick_meteor > duration then
+		generate_new_meteor(self)
+		reset_tick_meteor(self)
+	end
+end
+
+local function bg_moving(self, dt)
+	local bg1 = go.get_id("/go_bg")
+	local bg2 = go.get_id("/go_bg2")
+	local pos = go.get_position(bg1)
+	pos.y = pos.y - dt * 40 -- 20
+	go.set_position(pos, bg1)
+	pos.y = pos.y - 1
+	go.set_position(pos, bg2)
+	if go.get_position(bg1).y < -800 then
+		pos.y = 0
+		go.set_position(pos, bg1)
+	end
+end
+
+function init(self)
+	meteors_tab = {} -- cleaning data table from the latest game
+	msg.post(".", "generate_coin")
+	print("GC: " .. collectgarbage("count") * 1024) -- on_debug
+	-- set gameover.gui position
+	local gameover_gui_pos = go.get_position(go.get_id("go_gameover"))
+	gameover_gui_pos.x = 0
+
+	msg.post("/go_game#fading", "do_fade_in")
+
+	reset_tick_score(self)
+	reset_tick_meteor(self)
+end
+
+function update(self, dt)
+	if not self.game_end and not self.game_paused then
+		bg_moving(self, dt)
+		score_everytick(self, dt, TIME_BASE)
+		create_meteor_everytick(self, dt, TIME_SPAWN)
+	end
+	-- just in debug
+	if sys.get_engine_info().is_debug then
+		Fps.update(dt)
+		local fps_print = Fps.average_ms.." ms | "..Fps.fps.." FPS"
+		msg.post("@render:", "draw_text", { text = fps_print, position = vmath.vector3(10, 50, 0) } )
+	end
+end
+
+function on_message(self, message_id, message, sender)
+	-- from rocket.script
+	if message_id == hash("game_end") then
+		self.game_end = true
+		msg.post("/go_game#game", "game_end", {is_game_end = self.game_end})
+	end
+	-- from coin.script, this script
+	if message_id == hash("generate_coin") then
+		generate_new_coin(self)
+	end
+	-- from menu.gui_script
+	if message_id == hash("game_pause") then
+		self.game_paused = message.is_pause
+		for i, v in ipairs(meteors_tab) do
+			msg.post(v, "game_pause", {is_pause = message.is_pause})
+		end
+	end
+	-- from this script
+	if message_id == hash("generate_meteor") then
+		generate_new_meteor(self)
+		go.animate(".", "scale.z", go.PLAYBACK_ONCE_FORWARD, 1, go.EASING_LINEAR, 0.1, TIME_SPAWN, function()
+			msg.post(".", "generate_meteor")
+		end)
+	end
+end

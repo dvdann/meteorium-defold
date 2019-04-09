@@ -1,0 +1,24 @@
+images {
+  image: "/assets/sprites/p_tambah.png"
+}
+images {
+  image: "/assets/sprites/Star.png"
+}
+images {
+  image: "/assets/sprites/get-point.png"
+}
+images {
+  image: "/assets/sprites/red_block.png"
+}
+images {
+  image: "/assets/sprites/blue_block.png"
+}
+images {
+  image: "/assets/sprites/yell_fx.png"
+}
+images {
+  image: "/assets/sprites/bintang2.png"
+}
+margin: 2
+extrude_borders: 0
+inner_padding: 0

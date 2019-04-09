@@ -1,0 +1,25 @@
+[{
+  "id": "meteor",
+  "name": "Meteorid",
+  "description": "Meteorid adalah batu-batu angkasa \nberukuran kecil-kecil yang berada dan \nmelayang-layang bebas di angkasa dan \nbergerak cepat."
+}, {
+  "id": "rocket",
+  "name": "Roket",
+  "description": "Robert Goddard dianggap sebagai bapak \nperoketan modern. Dia membangun roket \nberbahan bakar cair pertama pada \ntahun 1926. Roket tersebut bisa terbang \nhingga 12 meter dalam 2,5 detik."
+}, {
+  "id": "moon",
+  "name": "Bulan",
+  "description": "Bulan adalah satelit alami Bumi satu-\nsatunya dan merupakan bulan terbesar \nkelima dalam Tata Surya. Fungsi bulan \nterhadap bumi sangat besar. Salah satunya \nmenjadi alat menghitung kalender hijriah."
+}, {
+  "id": "earth",
+  "name": "Bumi",
+  "description": "Bumi adalah planet ketiga dari Matahari \nyang merupakan planet terpadat dan \nterbesar kelima dari delapan planet dalam \nTata Surya. Bumi juga merupakan planet \nterbesar dari empat planet kebumian \nTata Surya. Bumi terkadang disebut dengan \ndunia atau Planet Biru."
+}, {
+  "id": "satellite",
+  "name": "Satelit",
+  "description": "Satelit adalah benda yang mengorbit benda \nlain dengan periode revolusi dan rotasi \ntertentu. Ada dua jenis satelit yakni satelit \nalami (Bulan) dan satelit buatan (benda \nbuatan manusia yang diluncurkan ke ruang \nangkasa dengan fungsi khusus)."
+}, {
+  "id": "sun",
+  "name": "Matahari",
+  "description": "Matahari adalah bola raksasa yang terbentuk \ndari gas hidrogen dan helium. Matahari \ntermasuk bintang berwarna putih yang \nberperan sebagai pusat tata surya."
+}]

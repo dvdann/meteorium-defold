@@ -1,0 +1,78 @@
+local Button = require "main.module.gui_button"
+
+local function create_sprite_button(node, released_animation, callback)
+	return Button.create(node, callback, "sprite", hash(released_animation), hash(released_animation.."2"))
+end
+
+local function store_reset_data(self)
+	score = 0 -- reset score
+	coin_collected = 0 -- reset coin
+end
+
+local function updating_coin_collect(self)
+	coin_saved = coin_saved + coin_collected
+	local node = gui.get_node("coin_collect_text")
+	gui.set_text(node, coin_collected)
+end
+
+local function updating_score(self)
+	local node = gui.get_node("score_text")
+	gui.set_text(node, score)
+end
+
+local function set_highscore(self)
+	if score > highscore then
+		highscore = score
+		local text = gui.get_text(gui.get_node("detail_text")) .. " Baru!"
+		gui.set_text(gui.get_node("detail_text"), text)
+	end
+	local node = gui.get_node("highscore_text")
+	gui.set_text(node, highscore)
+end
+
+function init(self)
+	local node = gui.get_node("bg")
+	gui.set_enabled(node, false)
+	self.menu_btn = create_sprite_button(gui.get_node("menu_btn"), "button_menuawal", function()
+		local node = gui.get_node("bg")
+		gui.set_enabled(node, false)
+		msg.post(".", "release_input_focus") -- will return false in on_input()
+		msg.post("/go_game", "release_input_focus")
+		msg.post("loader:/go_loader#script", "goto_menu")
+		store_reset_data(self)
+	end)
+	self.play_again_btn = create_sprite_button(gui.get_node("play_again_btn"), "button_mainlagi", function()
+		print("play again")
+		local node = gui.get_node("bg")
+		gui.set_enabled(node, false)
+		msg.post(".", "release_input_focus") -- will return false in on_input()
+		msg.post("/go_game", "release_input_focus")
+		msg.post("loader:/go_loader#script", "restart_game")
+		store_reset_data(self)
+	end)
+end
+
+function on_message(self, message_id, message, sender)
+	-- from rocket.script
+	if message_id == hash("show") then
+		updating_coin_collect(self)
+		updating_score(self)
+		set_highscore(self)
+		-- show the gameover
+		local node = gui.get_node("bg")
+		gui.set_enabled(node, true)
+		msg.post(".", "acquire_input_focus")
+		msg.post("loader:/go_loader#script", "save_game") -- saving game data
+	end
+	-- from game.gui_script
+	if message_id == hash("reset_data") then
+		-- exit current game, make no save anything stats
+		store_reset_data(self)
+	end
+end
+
+function on_input(self, action_id, action)
+	self.menu_btn.on_input(action_id, action)
+	self.play_again_btn.on_input(action_id, action)
+	return true -- hold the input
+end

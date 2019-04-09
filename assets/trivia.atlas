@@ -1,0 +1,21 @@
+images {
+  image: "/assets/sprites/trivia/trivia_bulan.png"
+}
+images {
+  image: "/assets/sprites/trivia/trivia_bumi.png"
+}
+images {
+  image: "/assets/sprites/trivia/trivia_matahari.png"
+}
+images {
+  image: "/assets/sprites/trivia/trivia_meteorid.png"
+}
+images {
+  image: "/assets/sprites/trivia/trivia_roket.png"
+}
+images {
+  image: "/assets/sprites/trivia/trivia_satelit.png"
+}
+margin: 2
+extrude_borders: 0
+inner_padding: 0

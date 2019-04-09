@@ -1,0 +1,151 @@
+go.property("speed", 180)
+local ROTATION_SPEED = 2
+local meteor_idx = 0
+
+local function set_angle(self)
+	-- table store angle
+	local tab_angle = {
+		math.pi,
+		math.pi / 1.5,
+		math.pi / 2,
+		math.pi / 4,
+		math.pi * 2,
+		math.pi / -4,
+		math.pi / -2,
+		math.pi / -1.5
+	}
+	local angle = math.random(1, #tab_angle)
+	go.set_rotation(vmath.quat_rotation_z(tab_angle[angle]))
+end
+
+local function rotating(self, dt)
+	self.rot.z = self.rot.z + ROTATION_SPEED * dt
+	go.set_rotation(vmath.quat_rotation_z(self.rot.z))
+	-- over 360deg or -360deg, then reset to 0deg (in radian)
+	if self.rot.z > (math.pi * 2) and self.rot.z < -(math.pi * 2) then
+		self.rot.z = 0 -- reset rotation when 2 phi
+	end
+end
+
+local function moving(self, dt)
+	-- horizontal movement
+	if self.pick_from == "left" or self.pick_from == "right" then
+		if self.pick_from == "left" then
+			self.pos.x = self.pos.x + self.speed * dt
+		elseif self.pick_from == "right" then
+			self.pos.x = self.pos.x - self.speed * dt
+		end
+		-- do diagonal movement when self.data_diagonal_x ~= "normal"
+		if self.data_diagonal_x == "bot" then
+			self.pos.y = self.pos.y - self.speed / 1.6 * dt
+		elseif	self.data_diagonal_x == "top" then
+			self.pos.y = self.pos.y + self.speed / 1.6 * dt
+		end
+	-- vertical movement
+	elseif self.pick_from == "top" or self.pick_from == "bot" then
+		if self.pick_from == "top" then
+			self.pos.y = self.pos.y - self.speed * dt
+		elseif self.pick_from == "bot" then
+			self.pos.y = self.pos.y + self.speed * dt
+		end
+		-- do diagonal movement when self.data_diagonal_y ~= "normal"
+		if self.data_diagonal_y == "left" then
+			self.pos.x = self.pos.x - self.speed / 1.6 * dt
+		elseif	self.data_diagonal_y == "right" then
+			self.pos.x = self.pos.x + self.speed / 1.6 * dt
+		end
+	end
+	go.set_position(self.pos)
+end
+
+local function object_deleted()
+	--pprint(meteors_tab)
+	for i, v in ipairs(meteors_tab) do
+		-- removing data from table meteors_tab after applying pause/stop move
+		if v == go.get_id() then
+			--print("need to remove by force:",i,"",v)
+			table.remove(meteors_tab,i)
+			meteor_idx = meteor_idx - 1
+		end
+	end
+	go.delete()
+end
+
+local function destroy_area(self)
+	if self.pos.x > 505 or self.pos.x < -25 then
+		object_deleted()
+	elseif self.pos.y > 825 or self.pos.y < -25 then
+		object_deleted()
+	end
+end
+
+local function random_color()
+	local colors = {
+		vmath.vector4(0.5, 0.5, 0.5, 1),
+		vmath.vector4(0.41, 0.41, 0.41, 1),
+		vmath.vector4(1, 1, 1, 1),
+		vmath.vector4(0.55, 0.55, 0.55, 1)
+	}
+	--return colors[math.random(1, #colors)]
+	return colors[4] -- debug_color
+end
+
+local function random_size(self, min, max)
+	local size_scale = go.get_scale()
+	local val = min + math.random() * (max - min)
+	size_scale.x = val
+	size_scale.y = val
+	go.set_scale(size_scale)
+	if val < 0.7 then
+		self.speed = self.speed + 25
+	elseif val > 1.1 then
+		self.speed = self.speed - 20
+	end
+end
+
+function init(self)
+	self.rot = go.get_rotation()
+	self.pos = go.get_position()
+	local diagonal_y = {
+		"left",
+		"normal",
+		"right",
+		"normal"
+	}
+	local diagonal_x = {
+		"top",
+		"normal",
+		"bot",
+		"normal"
+	}
+	self.data_diagonal_y = diagonal_y[math.random(1,#diagonal_y)]
+	self.data_diagonal_x = diagonal_x[math.random(1,#diagonal_x)]
+
+	sprite.set_constant("#sprite", "tint", random_color()) -- set color to random
+	random_size(self, 0.65, 1.2)
+
+	set_angle(self)
+	
+	meteor_idx = meteor_idx + 1 -- just tracing, how much meteor is created
+	self.idx = meteor_idx
+	table.insert(meteors_tab, self.idx, go.get_id())
+end
+
+function update(self, dt)
+	if not self.game_paused then
+		moving(self, dt)
+		destroy_area(self)
+	end
+	rotating(self, dt)
+end
+
+function on_message(self, message_id, message, sender)
+	-- from game.script
+	if message_id == hash("set_move_dir") then
+		self.pick_from = message.spawn_from
+	end
+	-- from game.script
+	if message_id == hash("game_pause") then
+		self.game_paused = message.is_pause
+	end
+end
